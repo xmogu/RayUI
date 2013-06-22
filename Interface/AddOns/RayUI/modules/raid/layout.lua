@@ -24,28 +24,6 @@ local function menu(self)
     return ToggleDropDownMenu(1, nil, dropdown, "cursor", 0, 0)
 end
 
-local function ColorGradient(perc, color1, color2, color3)
-	local r1,g1,b1 = 1, 0, 0
-	local r2,g2,b2 = .85, .8, .45
-	local r3,g3,b3 = .12, .12, .12
-
-	if perc >= 1 then
-		return r3, g3, b3
-	elseif perc <= 0 then
-		return r1, g1, b1
-	end
-
-	local segment, relperc = math.modf(perc*(3-1))
-	local offset = (segment*3)+1
-
-	-- < 50% > 0%
-	if(offset == 1) then
-		return r1 + (r2-r1)*relperc, g1 + (g2-g1)*relperc, b1 + (b2-b1)*relperc
-	end
-	-- < 99% > 50%
-	return r2 + (r3-r2)*relperc, g2 + (g3-g2)*relperc, b2 + (b3-b2)*relperc
-end
-
 local init = function(self)
     if RA.db.hidemenu and InCombatLockdown() then
         return
@@ -84,6 +62,28 @@ local init = function(self)
     end
 end
 
+local function ColorGradient(perc, color1, color2, color3)
+	local r1,g1,b1 = 1, 0, 0
+	local r2,g2,b2 = .85, .8, .45
+	local r3,g3,b3 = .12, .12, .12
+
+	if perc >= 1 then
+		return r3, g3, b3
+	elseif perc <= 0 then
+		return r1, g1, b1
+	end
+
+	local segment, relperc = math.modf(perc*(3-1))
+	local offset = (segment*3)+1
+
+	-- < 50% > 0%
+	if(offset == 1) then
+		return r1 + (r2-r1)*relperc, g1 + (g2-g1)*relperc, b1 + (b2-b1)*relperc
+	end
+	-- < 99% > 50%
+	return r2 + (r3-r2)*relperc, g2 + (g3-g2)*relperc, b2 + (b3-b2)*relperc
+end
+
 -- Show Target Border
 local function ChangedTarget(self)
     if UnitIsUnit("target", self.unit) then
@@ -110,14 +110,12 @@ local function updateThreat(self, event, unit)
     if(status and status > 1) then
         local r, g, b = GetThreatStatusColor(status)
         self.Threat:SetBackdropBorderColor(r, g, b, 1)
-        self.border:SetBackdropColor(r, g, b, 1)
     else
 		if R.global.general.theme == "Shadow" then
 			self.Threat:SetBackdropBorderColor(0, 0, 0, 1)
 		else
 			self.Threat:SetBackdropBorderColor(0, 0, 0, 0)
 		end
-        self.border:SetBackdropColor(0, 0, 0, 1)
     end
     self.Threat:Show()
 end
@@ -238,7 +236,6 @@ local function PostPower(power, unit)
 
     if (perc < 10 and UnitIsConnected(unit) and ptype == "MANA" and not UnitIsDeadOrGhost(unit)) then
         self.Threat:SetBackdropBorderColor(0, 0, 1, 1)
-        self.border:SetBackdropColor(0, 0, 1, 1)
     else
         -- pass the coloring back to the threat func
         updateThreat(self, nil, unit)
@@ -443,27 +440,20 @@ local function style(self)
     self.menu = menu
 
     self.BG = CreateFrame("Frame", nil, self)
+    self.BG:SetFrameStrata("BACKGROUND")
     self.BG:SetPoint("TOPLEFT", self, "TOPLEFT")
     self.BG:SetPoint("BOTTOMRIGHT", self, "BOTTOMRIGHT")
     self.BG:SetFrameLevel(3)
     self.BG:SetBackdrop(backdrop)
     self.BG:SetBackdropColor(0, 0, 0)
 
-    self.border = CreateFrame("Frame", nil, self)
-    self.border:SetPoint("TOPLEFT", self, "TOPLEFT")
-    self.border:SetPoint("BOTTOMRIGHT", self, "BOTTOMRIGHT")
-    self.border:SetFrameLevel(2)
-    self.border:SetBackdrop(border2)
-    self.border:SetBackdropColor(0, 0, 0)
-
     -- Mouseover script
     self:SetScript("OnEnter", OnEnter)
     self:SetScript("OnLeave", OnLeave)
     self:RegisterForClicks("AnyUp")
 
-    -- Health
-    self.Health = CreateFrame"StatusBar"
-    self.Health:SetParent(self)
+    self.Health = CreateFrame("StatusBar", nil, self)
+    self.Health:SetFrameStrata("LOW")
     self.Health.frequentUpdates = true
 
     self.Health.bg = self.Health:CreateTexture(nil, "BORDER")
@@ -474,6 +464,7 @@ local function style(self)
 
     -- Threat
     local threat = CreateFrame("Frame", nil, self)
+	threat:SetFrameStrata("BACKGROUND")
     threat:Point("TOPLEFT", self, "TOPLEFT", -5, 5)
     threat:Point("BOTTOMRIGHT", self, "BOTTOMRIGHT", 5, -5)
     threat:SetFrameLevel(0)
@@ -488,8 +479,8 @@ local function style(self)
     self.Threat = threat
 
     -- Name
-    local name = self.Health:CreateFontString(nil, "OVERLAY", -8)
-    name:SetPoint("CENTER")
+    local name = self:CreateFontString(nil, "ARTKWORK")
+    name:SetPoint("CENTER", self.Health)
     name:SetJustifyH("CENTER")
     name:SetFont(R["media"].font, R["media"].fontsize, R["media"].fontflag)
     name:SetWidth(RA.db.width)
@@ -497,9 +488,19 @@ local function style(self)
     self.Name = name
     self:Tag(self.Name, "[RayUFRaid:name]")
 
+	-- Name
+	local healtext = self:CreateFontString(nil, "ARTKWORK")
+	healtext:SetPoint("BOTTOM", self.Health)
+	healtext:SetShadowOffset(1.25, -1.25)
+	healtext:SetFont(R["media"].font, R["media"].fontsize - 2, R["media"].fontflag)
+	healtext:SetWidth(RA.db.width)
+	healtext:SetText("123")
+	self.Healtext = healtext
+	self:Tag(healtext, "[RayUIRaid:def]")
+
     -- Power
-    self.Power = CreateFrame"StatusBar"
-    self.Power:SetParent(self)
+    self.Power = CreateFrame("StatusBar", nil, self)
+    self.Power:SetFrameStrata("LOW")
     self.Power.bg = self.Power:CreateTexture(nil, "BORDER")
     self.Power.bg:SetAllPoints(self.Power)
 	self.Power.frequentUpdates = false
@@ -516,21 +517,23 @@ local function style(self)
 
     -- Target tex
     local tBorder = CreateFrame("Frame", nil, self)
+	tBorder:SetFrameStrata("BACKGROUND")
     tBorder:SetPoint("TOPLEFT", self, "TOPLEFT")
     tBorder:SetPoint("BOTTOMRIGHT", self, "BOTTOMRIGHT")
     tBorder:SetBackdrop(border)
     tBorder:SetBackdropColor(.8, .8, .8, 1)
-    tBorder:SetFrameLevel(1)
+    tBorder:SetFrameLevel(2)
     tBorder:Hide()
     self.TargetBorder = tBorder
 
     -- Focus tex
     local fBorder = CreateFrame("Frame", nil, self)
+	fBorder:SetFrameStrata("BACKGROUND")
     fBorder:SetPoint("TOPLEFT", self, "TOPLEFT")
     fBorder:SetPoint("BOTTOMRIGHT", self, "BOTTOMRIGHT")
     fBorder:SetBackdrop(border)
     fBorder:SetBackdropColor(.6, .8, 0, 1)
-    fBorder:SetFrameLevel(1)
+    fBorder:SetFrameLevel(2)
     fBorder:Hide()
     self.FocusHighlight = fBorder
 
@@ -566,7 +569,6 @@ local function style(self)
 
     self.freebIndicators = true
     self.freebAfk = true
-    self.freebHeals = true
 
     self.ResurrectIcon = self.Health:CreateTexture(nil, "OVERLAY")
     self.ResurrectIcon:SetPoint("TOP", self, 0, -2)
@@ -579,22 +581,14 @@ local function style(self)
     }
 
     self.freebRange = RA.db.arrow and range
-    self.Range = RA.db.arrow == false and range
+    self.Range = range
 
     -- ReadyCheck
-	local ReadyCheck = CreateFrame("Frame", nil, self.Health)
-    ReadyCheck:SetPoint("CENTER")
-    ReadyCheck:SetSize(RA.db.leadersize + 4, RA.db.leadersize + 4)
-    self.ReadyCheck = ReadyCheck:CreateTexture(nil, "OVERLAY")
-    self.ReadyCheck:SetPoint("TOP")
+    self.ReadyCheck = self.Health:CreateTexture(nil, "OVERLAY")
+    self.ReadyCheck:SetPoint("BOTTOM", self)
     self.ReadyCheck:SetSize(RA.db.leadersize + 4, RA.db.leadersize+ 4)
 
     -- Auras
-    --local auras = CreateFrame("Frame", nil, self)
-    --auras:SetSize(RA.db.aurasize, RA.db.aurasize)
-    --auras:SetPoint("CENTER", self.Health)
-    --auras.size = RA.db.aurasize
-    --self.freebAuras = auras
 	self.RaidDebuffs = CreateFrame("Frame", nil, self)
 	self.RaidDebuffs:SetFrameLevel(10)
 	self.RaidDebuffs:SetPoint("CENTER", self.Health)
@@ -625,6 +619,9 @@ local function style(self)
     auraWatch.icons = {}
     self.AuraWatch = auraWatch
     UpdateAuraWatch(self)
+
+	-- Heal Prediction
+	UF:EnableHealPredictionAndAbsorb(self)
 
     -- Add events
     self:RegisterEvent("PLAYER_FOCUS_CHANGED", FocusTarget)
@@ -804,15 +801,11 @@ function RA:SpawnRaid()
 	UIDropDownMenu_Initialize(dropdown, init, "MENU")
 	backdrop = {
 		bgFile = R["media"].blank,
-		insets = {top = 0, left = 0, bottom = 0, right = 0},
+		insets = {top = -R.mult, left = -R.mult, bottom = -R.mult, right = -R.mult},
 	}
 	border = {
 		bgFile = R["media"].blank,
 		insets = {top = -R:Scale(2), left = -R:Scale(2), bottom = -R:Scale(2), right = -R:Scale(2)},
-	}
-	border2 = {
-		bgFile = R["media"].blank,
-		insets = {top = -R.mult, left = -R.mult, bottom = -R.mult, right = -R.mult},
 	}
 	glowBorder = {
 		bgFile = R["media"].blank,
@@ -858,6 +851,7 @@ function RA:SpawnRaid()
 			group:Point(pos, raid15[i-1], posRel, colX or 0, colY or 0)
 		end
 		raid15[i] = group
+		group:Show()
         R:CreateMover(group, group:GetName().."Mover", "Raid1-15 Group"..i, nil, nil, "ALL,RAID15", true)
         RA.Raid15SmartVisibility(group)
 	end
@@ -870,6 +864,7 @@ function RA:SpawnRaid()
 			group:Point(pos, raid25[i-1], posRel, colX or 0, colY or 0)
 		end
 		raid25[i] = group
+		group:Show()
         R:CreateMover(group, group:GetName().."Mover", "Raid1-25 Group"..i, nil, nil, "ALL,RAID25,RAID40", true)
         RA.Raid25SmartVisibility(group)
 	end
@@ -883,6 +878,7 @@ function RA:SpawnRaid()
 				group:Point(pos, raid40[i-1], posRel, colX or 0, colY or 0)
 			end
 			raid40[i] = group
+			group:Show()
             R:CreateMover(group, group:GetName().."Mover", "Raid1-40 Group"..i, nil, nil, "ALL,RAID40", true)
             RA.Raid40SmartVisibility(group)
 		end

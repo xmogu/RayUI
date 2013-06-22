@@ -196,17 +196,9 @@ function TT:GameTooltip_SetDefaultAnchor(tooltip, parent)
 		if owner and owner:match("RayUFRaid") then
 			local parent = _G[owner:match("RayUFRaid%d%d_%d")]
 			if R.db.Raid.horizontal then
-				if R.db.Raid.growth == "RIGHT" then
-					tooltip:Point("BOTTOMRIGHT", parent, "BOTTOMLEFT", -23, 0)
-				else
-					tooltip:Point("BOTTOMLEFT", parent, "BOTTOMRIGHT", 23, 0)
-				end
+				tooltip:Point("BOTTOMRIGHT", parent, "BOTTOMLEFT", -23, 0)
 			else
-				if R.db.Raid.growth == "UP" then
-					tooltip:Point("TOPRIGHT", parent, "BOTTOMRIGHT", 0, -23)
-				else
-					tooltip:Point("BOTTOMRIGHT", parent, "TOPRIGHT", 0, 23)
-				end
+				tooltip:Point("BOTTOMRIGHT", parent, "TOPRIGHT", 0, 23)
 			end
 		elseif RayUFRaid40_6UnitButton1 and RayUFRaid40_6UnitButton1:IsVisible() and (GetScreenWidth() - RayUFRaid40_8:GetRight()) < 250 then
 			tooltip:Point("BOTTOMRIGHT", UIParent, "BOTTOMRIGHT", -50, RayUFRaid40_8:GetBottom() + RayUFRaid40_8:GetHeight() + 30)
@@ -332,10 +324,10 @@ function TT:SetiLV()
 end
 
 function TT:GetQuality(ItemScore)
-    if ItemScore < 440 then
+    if ItemScore < 500 then
         return 1, 1, 0.1
     else
-        return R:ColorGradient((ItemScore - 440)/100, 1, 1, 0.1, 1, 0.1, 0.1)
+        return R:ColorGradient((ItemScore - 500)/100, 1, 1, 0.1, 1, 0.1, 0.1)
     end
 end
 
@@ -530,8 +522,8 @@ function TT:OnTooltipSetUnit(tooltip)
                 GameTooltipTextLeft2:SetTextColor(gcol[1], gcol[2], gcol[3])
             end
         end
-        for i=2, GameTooltip:NumLines() do
-            if _G["GameTooltipTextLeft" .. i]:GetText():find(("(%s)"):format(PLAYER)) then
+        for i=2, tooltip:NumLines() do
+            if _G["GameTooltipTextLeft" .. i]:GetText():find(("%%(%s%%)"):format(PLAYER)) then
                 _G["GameTooltipTextLeft" .. i]:SetText(string.format(R:RGBToHex(diffColor.r, diffColor.g, diffColor.b).."%s|r ", unitLevel) .. unitRace .. " ".. unitClass)
                 break
             end
@@ -539,6 +531,11 @@ function TT:OnTooltipSetUnit(tooltip)
         if UnitFactionGroup(unit) and UnitFactionGroup(unit) ~= "Neutral" then
             GameTooltipTextLeft1:SetText("|TInterface\\Addons\\RayUI\\media\\UI-PVP-"..select(1, UnitFactionGroup(unit))..".blp:16:16:0:0:64:64:5:40:0:35|t "..GameTooltipTextLeft1:GetText())
         end
+		if UnitIsAFK(unit) then
+			tooltip:AppendText((" %s"):format(("|cffFFFFFF<|r|cffFF3333%s|r|cffFFFFFF>|r"):format(AFK)))
+		elseif UnitIsDND(unit) then 
+			tooltip:AppendText((" %s"):format(("|cffFFFFFF<|r|cffE7E716%s|r|cffFFFFFF>|r"):format(DND)))
+		end
 		self:iLVSetUnit()
 		self:TalentSetUnit()
 		if not UnitIsEnemy(unit, "player") and unitSpec then
@@ -555,13 +552,13 @@ function TT:OnTooltipSetUnit(tooltip)
 			local name, _, icon = GetSpellInfo(spellID)
 			icon = icon and "|T"..icon..":12:12:0:0:64:64:5:59:5:59|t " or ""
 			if name then
-				GameTooltip:AddDoubleLine(select(1, GetSpellInfo(110309))..": ", icon.."|cffffffff"..name)
+				tooltip:AddDoubleLine(select(1, GetSpellInfo(110309))..": ", icon.."|cffffffff"..name)
 			end
 		end
     elseif ( UnitIsWildBattlePet(unit) or UnitIsBattlePetCompanion(unit) ) then
         local petLevel = UnitBattlePetLevel(unit)
         local petType = _G["BATTLE_PET_DAMAGE_NAME_"..UnitBattlePetType(unit)]
-        for i=2, GameTooltip:NumLines() do
+        for i=2, tooltip:NumLines() do
             local text = _G["GameTooltipTextLeft" .. i]:GetText()
             if text:find(LEVEL) then
                 _G["GameTooltipTextLeft" .. i]:SetText(petLevel .. unitClassification .. petType)
@@ -569,7 +566,7 @@ function TT:OnTooltipSetUnit(tooltip)
             end
         end
     else
-        for i=2, GameTooltip:NumLines() do
+        for i=2, tooltip:NumLines() do
             local text = _G["GameTooltipTextLeft" .. i]:GetText()
             if text:find(LEVEL) or text:find(creatureType) then
                 _G["GameTooltipTextLeft" .. i]:SetText(string.format(R:RGBToHex(diffColor.r, diffColor.g, diffColor.b).."%s|r", unitLevel) .. unitClassification .. creatureType)
@@ -577,7 +574,7 @@ function TT:OnTooltipSetUnit(tooltip)
             end
         end
     end
-    for i = 1, GameTooltip:NumLines() do
+    for i = 1, tooltip:NumLines() do
         local line = _G["GameTooltipTextLeft"..i]
         while line and line:GetText() and (line:GetText() == PVP_ENABLED or line:GetText() == FACTION_HORDE or line:GetText() == FACTION_ALLIANCE) do
             line:SetText()

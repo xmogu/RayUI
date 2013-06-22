@@ -234,9 +234,9 @@ local function UpdateAuraAnchors(frame)
 	for i = 1, 5 do
 		if frame.icons and frame.icons[i] and frame.icons[i]:IsShown() then
 			if frame.icons.lastShown then
-				frame.icons[i]:SetPoint("RIGHT", frame.icons.lastShown, "LEFT", -2, 0)
+				frame.icons[i]:SetPoint("LEFT", frame.icons.lastShown, "RIGHT", 2, 0)
 			else
-				frame.icons[i]:SetPoint("RIGHT",frame.icons,"RIGHT")
+				frame.icons[i]:SetPoint("LEFT",frame.icons,"LEFT")
 			end
 			frame.icons.lastShown = frame.icons[i]
 		end
@@ -273,18 +273,13 @@ local function CreateAuraIcon(parent)
 	button.bord:SetPoint("TOPLEFT",button,"TOPLEFT", noscalemult,-noscalemult)
 	button.bord:SetPoint("BOTTOMRIGHT",button,"BOTTOMRIGHT",-noscalemult,noscalemult)
 
-	button.bg2 = button:CreateTexture(nil, "ARTWORK")
-	button.bg2:SetTexture(unpack(R["media"].backdropcolor))
-	button.bg2:SetPoint("TOPLEFT",button,"TOPLEFT", noscalemult*2,-noscalemult*2)
-	button.bg2:SetPoint("BOTTOMRIGHT",button,"BOTTOMRIGHT",-noscalemult*2,noscalemult*2)
-
 	button.icon = button:CreateTexture(nil, "OVERLAY")
-	button.icon:SetPoint("TOPLEFT",button,"TOPLEFT", noscalemult*3,-noscalemult*3)
-	button.icon:SetPoint("BOTTOMRIGHT",button,"BOTTOMRIGHT",-noscalemult*3,noscalemult*3)
+	button.icon:SetPoint("TOPLEFT",button,"TOPLEFT", noscalemult*2,-noscalemult*2)
+	button.icon:SetPoint("BOTTOMRIGHT",button,"BOTTOMRIGHT",-noscalemult*2,noscalemult*2)
 	button.icon:SetTexCoord(0.1, 0.9, 0.1, 0.9)
 
 	button.text = button:CreateFontString(nil, "OVERLAY")
-	button.text:Point("CENTER", 1, 1)
+	button.text:Point("CENTER", button, "BOTTOM", 1, 1)
 	button.text:SetJustifyH("CENTER")
 	button.text:SetFont(R["media"].font, 10, "OUTLINE")
 	button.text:SetShadowColor(0, 0, 0, 0)
@@ -292,7 +287,7 @@ local function CreateAuraIcon(parent)
 	button.count = button:CreateFontString(nil,"OVERLAY")
 	button.count:SetFont(R["media"].font,9,R["media"].fontflag)
 	button.count:SetShadowColor(0, 0, 0, 0.4)
-	button.count:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", 2, 0)
+	button.count:SetPoint("TOPRIGHT", button, "TOPRIGHT", 2, 2)
 	return button
 end
 
@@ -304,7 +299,8 @@ local function formatTime(s)
 		return format("%dh", ceil(s / hour))
 	elseif s >= minute then
 		return format("%dm", ceil(s / minute))
-	elseif s >= minute / 12 then
+	-- elseif s >= minute / 12 then
+	elseif s >= 0 then
 		return floor(s)
 	end
 
@@ -344,12 +340,11 @@ end
 local function UpdateAuraIcon(button, unit, index, filter)
 	local name,_,icon,count,debuffType,duration,expirationTime,_,_,_,spellID = UnitAura(unit,index,filter)
 
-	if debuffType then
-		button.bord:SetTexture(DebuffTypeColor[debuffType].r, DebuffTypeColor[debuffType].g, DebuffTypeColor[debuffType].b)
-	else
-		button.bord:SetTexture(1, 0, 0, 1)
-	end
-
+	-- if debuffType then
+		-- button.bord:SetTexture(DebuffTypeColor[debuffType].r, DebuffTypeColor[debuffType].g, DebuffTypeColor[debuffType].b)
+	-- else
+		-- button.bord:SetTexture(1, 0, 0, 1)
+	-- end
 	button.icon:SetTexture(icon)
 	button.firstUpdate = true
 	button.expirationTime = expirationTime
@@ -382,8 +377,8 @@ local function OnAura(frame, unit)
 		if duration and match == true then
 			if not frame.icons[i] then frame.icons[i] = CreateAuraIcon(frame.icons) end
 			local icon = frame.icons[i]
-			if i == 1 then icon:SetPoint("RIGHT",frame.icons,"RIGHT") end
-			if i ~= 1 and i <= 5 then icon:SetPoint("RIGHT", frame.icons[i-1], "LEFT", -2, 0) end
+			if i == 1 then icon:SetPoint("LEFT",frame.icons,"LEFT") end
+			if i ~= 1 and i <= 5 then icon:SetPoint("LEFT", frame.icons[i-1], "RIGHT", 2, 0) end
 			i = i + 1
 			UpdateAuraIcon(icon, frame.unit, index, "HARMFUL")
 		end
@@ -415,15 +410,13 @@ end
 local function UpdateCastText(frame, curValue)
 	local minValue, maxValue = frame:GetMinMaxValues()
 
-	if UnitChannelInfo("target") then
+	-- if UnitChannelInfo("target") then
 		frame.time:SetFormattedText("%.1f ", curValue)
-		frame.name:SetText(select(1, (UnitChannelInfo("target"))))
-	end
+	-- end
 
-	if UnitCastingInfo("target") then
-		frame.time:SetFormattedText("%.1f ", maxValue - curValue)
-		frame.name:SetText(select(1, (UnitCastingInfo("target"))))
-	end
+	-- if UnitCastingInfo("target") then
+		-- frame.time:SetFormattedText("%.1f ", maxValue - curValue)
+	-- end
 end
 
 --Create our blacklist for nameplates, so prevent a certain nameplate from ever showing
@@ -461,12 +454,12 @@ end
 local function Colorize(frame, r, g, b)
     frame.hp.originalr, frame.hp.originalg, frame.hp.originalb = r, g, b
 
-	for class, color in pairs(R.colors.class) do
+	for class, color in pairs(RAID_CLASS_COLORS) do
 		local bb = b
         if class == "MONK" then
             bb = bb - 0.01
         end
-		if R.colors.class[class].r == r and R.colors.class[class].g == g and R.colors.class[class].b == bb then
+		if RAID_CLASS_COLORS[class].r == r and RAID_CLASS_COLORS[class].g == g and RAID_CLASS_COLORS[class].b == bb then
 			frame.hasClass = true
 			frame.isFriendly = false
 			frame.hp:SetStatusBarColor(unpack(RayUF.colors.class[class]))
@@ -549,8 +542,8 @@ local function OnFrameShow(frame)
 
 	if not frame.icons then
 		frame.icons = CreateFrame("Frame", nil, frame)
-		frame.icons:SetPoint("BOTTOMRIGHT", frame.hp, "TOPRIGHT", 0, 6)
-		frame.icons:SetPoint("BOTTOMLEFT", frame.hp, "TOPLEFT", 0, 6)
+		frame.icons:SetPoint("BOTTOMRIGHT", frame.hp, "TOPRIGHT", 0, 11)
+		frame.icons:SetPoint("BOTTOMLEFT", frame.hp, "TOPLEFT", 0, 11)
 		frame.icons:SetHeight(25)
 		frame.icons:SetFrameLevel(frame.hp:GetFrameLevel()+2)
 		frame:RegisterEvent("UNIT_AURA")
@@ -651,7 +644,7 @@ local function SkinObjects(frame, nameFrame)
 	local oldhp, cb = frame:GetChildren()
 	local threat, hpborder, overlay, oldlevel, bossicon, raidicon, elite = frame:GetRegions()
 	local oldname = nameFrame:GetRegions()
-	local _, cbborder, cbshield, cbicon = cb:GetRegions()
+	local _, cbborder, cbshield, cbicon, cbtext, cbshadow = cb:GetRegions()
 
 	if not frame.hp then
 		--Health Bar
@@ -716,7 +709,8 @@ local function SkinObjects(frame, nameFrame)
 	cb.time:SetShadowOffset(R.mult, -R.mult)
 
 	--Create Cast Name Text
-	cb.name = cb:CreateFontString(nil, "ARTWORK")
+	cb.name = cbtext
+	cb.name:ClearAllPoints()
 	cb.name:SetPoint("TOPLEFT", cb, "BOTTOMLEFT", 0, -1)
 	cb.name:SetFont(R["media"].font, FONTSIZE, R["media"].fontflag)
 	cb.name:SetJustifyH("LEFT")
@@ -829,6 +823,7 @@ local function SkinObjects(frame, nameFrame)
 	QueueObject(frame, hpborder)
 	QueueObject(frame, cbshield)
 	QueueObject(frame, cbborder)
+	QueueObject(frame, cbshadow)
 	QueueObject(frame, oldname)
 	QueueObject(frame, bossicon)
 	QueueObject(frame, elite)
@@ -1021,7 +1016,7 @@ local function HookFrames(...)
 end
 
 function NP:COMBAT_LOG_EVENT_UNFILTERED(_, _, event, ...)
-	if event == "SPELL_AURA_REMOVED" then
+	if event == "SPELL_AURA_REMOVED" or event == "SPELL_AURA_BROKEN" or event == "SPELL_AURA_BROKEN_SPELL" then
 		local _, sourceGUID, _, _, _, destGUID, _, _, _, spellID = ...
 
 		if sourceGUID == UnitGUID("player") then

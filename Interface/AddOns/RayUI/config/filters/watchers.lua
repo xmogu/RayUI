@@ -519,7 +519,7 @@ R["Watcher"] = {
                 --斷筋
                 { spellID = 1715, unitId = "target", caster = "all", filter = "DEBUFF" },
                 --雷霆一擊
-                { spellID = 6343, unitId = "target", caster = "player", filter = "DEBUFF" },
+                { spellID = 115798, unitId = "target", caster = "player", filter = "DEBUFF" },
                 --挫志怒吼
                 { spellID = 1160, unitId = "target", caster = "player", filter = "DEBUFF" },
                 --破膽怒吼
@@ -770,6 +770,8 @@ R["Watcher"] = {
 				{ spellID = 31850, unitId = "player", caster = "player", filter = "BUFF" },
 				--光速
 				{ spellID = 85499, unitId = "player", caster = "player", filter = "BUFF" },
+				--公正之盾
+				{ spellID = 132403, unitId = "player", caster = "player", filter = "BUFF" },
 				--榮耀壁壘
 				{ spellID = 114637, unitId = "player", caster = "player", filter = "BUFF" },
 				--大十字軍
@@ -995,7 +997,8 @@ R["Watcher"] = {
                 size = 28,
 
                 --元素詛咒
-                { spellID = 1490, unitId = "target", caster = "player", filter = "DEBUFF" },
+                { spellID = 1490, unitId = "target", caster = "all", filter = "DEBUFF" },
+                { spellID = 104225, unitId = "target", caster = "all", filter = "DEBUFF" },
             },
             {
                 name = "目标重要buff&debuff",
@@ -1032,6 +1035,8 @@ R["Watcher"] = {
                 { spellID = 1098, unitId = "pet", caster = "player", filter = "DEBUFF" },
                 --惡魔跳躍
                 { spellID = 54785, unitId = "target", caster = "player", filter = "DEBUFF" },
+                --獻祭
+                { spellID = 108686, unitId = "target", caster = "player", filter = "DEBUFF" },
             },
             {
                 name = "玩家重要buff&debuff",
@@ -1086,6 +1091,8 @@ R["Watcher"] = {
                 { spellID = 84747, unitId = "player", caster = "player", filter = "BUFF" },
                 --預知
                 { spellID = 115189, unitId = "player", caster = "player", filter = "BUFF" },
+                --手裏劍
+                { spellID = 137586, unitId = "player", caster = "player", filter = "BUFF" },
             },
             {
                 name = "目标buff&debuff",
@@ -1295,6 +1302,8 @@ R["Watcher"] = {
                 { spellID = 51271, unitId = "player", caster = "player", filter = "BUFF" },
                 --血魄充能
                 { spellID = 114851, unitId = "player", caster = "player", filter = "BUFF" },
+                --黑暗救贖
+                { spellID = 101568, unitId = "player", caster = "player", filter = "BUFF" },
                 --寶寶能量
                 { spellID = 91342, unitId = "pet", caster = "player", filter = "BUFF" },
                 --黑暗變身
@@ -1520,7 +1529,7 @@ R["Watcher"] = {
 				-- 稷坤的傳說之羽 (力量, 觸發)
 				{ spellID = 138759, unitId = "player", caster = "player", filter = "BUFF" },
 				-- 贊達拉火花 (力量, 觸發)
-				{ spellID = 138958, unitId = "player", caster = "player", filter = "BUFF" },
+				{ spellID = 138960, unitId = "player", caster = "player", filter = "BUFF" },
 				-- 普莫迪斯的狂怒咒符 (力量, 觸發)
 				{ spellID = 138870, unitId = "player", caster = "player", filter = "BUFF" },
 				-- 雙妃之凝視 (暴擊, 觸發)
@@ -1561,6 +1570,8 @@ R["Watcher"] = {
 				{ spellID = 126659, unitId = "player", caster = "player", filter = "BUFF" },
 				-- 宇宙之光 (智力, 觸發)
 				{ spellID = 126577, unitId = "player", caster = "player", filter = "BUFF" },
+				-- 完美瞄準 (智力, 觸發)
+				{ spellID = 138963, unitId = "player", caster = "player", filter = "BUFF" },
 				-- 治療
 				-- 秦璽的極化徽印 (智力, 觸發)
 				{ spellID = 126588, unitId = "player", caster = "player", filter = "BUFF" },
@@ -1639,7 +1650,7 @@ R["Watcher"] = {
 
 				--套裝
                 { spellID = 138317, unitId = "player", caster = "player", filter = "BUFF" },
-				
+
             },
             {
                 name = "PVE/PVP玩家buff&debuff",
@@ -1975,6 +1986,8 @@ R["Watcher"] = {
 				{ spellID = 140741, unitId = "player", caster = "all", filter = "BUFF", fuzzy = true },
 				-- 靜電震擊
 				{ spellID = 135695, unitId = "player", caster = "all", filter = "DEBUFF", fuzzy = true },
+				-- 動盪生命
+				{ spellID = 138297, unitId = "player", caster = "all", filter = "DEBUFF", fuzzy = true },
 
                 --魔古山寶庫
                 --石衛士

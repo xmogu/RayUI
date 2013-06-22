@@ -58,6 +58,7 @@ local function LoadSkin()
 	S:ReskinCheck(ReputationDetailAtWarCheckBox)
 	S:ReskinCheck(ReputationDetailInactiveCheckBox)
 	S:ReskinCheck(ReputationDetailMainScreenCheckBox)
+	S:ReskinCheck(ReputationDetailLFGBonusReputationCheckBox)
 	S:ReskinInput(GearManagerDialogPopupEditBox)
 
 	hooksecurefunc("CharacterFrame_Expand", function()
@@ -155,7 +156,7 @@ local function LoadSkin()
 	select(8, CharacterSecondaryHandSlot:GetRegions()):Kill()
 
 	local function SkinItemFlyouts()
-		for i = 1, EQUIPMENTFLYOUT_MAXITEMS do
+		for i = 1, (EquipmentFlyoutFrame.totalItems or 0) do
 			local bu = _G["EquipmentFlyoutFrameButton"..i]
 			local icon = _G["EquipmentFlyoutFrameButton"..i.."IconTexture"]
 			if bu and not bu.reskinned then

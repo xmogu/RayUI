@@ -44,8 +44,7 @@ function RM:UpdateReminderIcon(event, unit)
 	if db.spellGroup then
 		for buff, value in pairs(db.spellGroup) do
 			if value == true then
-				local name = GetSpellInfo(buff)
-				local usable, nomana = IsUsableSpell(name)
+				local usable, nomana = IsUsableSpell(buff)
 				if (usable or nomana) and IsSpellKnown(buff) then
 					self.cacheTexture = select(3, GetSpellInfo(buff))
 					self.icon:SetTexture(self.cacheTexture)
@@ -54,28 +53,6 @@ function RM:UpdateReminderIcon(event, unit)
 				end
 			end
 		end
-
-		if (not self.hasTexture and event == "PLAYER_ENTERING_WORLD") then
-			self:UnregisterAllEvents()
-			self:RegisterEvent("LEARNED_SPELL_IN_TAB")
-			return
-		elseif (self.hasTexture and event == "LEARNED_SPELL_IN_TAB") then
-			self:UnregisterAllEvents()
-			self:RegisterEvent("UNIT_AURA")
-			if db.combat then
-				self:RegisterEvent("PLAYER_REGEN_ENABLED")
-				self:RegisterEvent("PLAYER_REGEN_DISABLED")
-			end
-
-			if db.instance or db.pvp then
-				self:RegisterEvent("ZONE_CHANGED_NEW_AREA")
-			end
-
-			if db.role then
-				self:RegisterEvent("UNIT_INVENTORY_CHANGED")
-			end
-		end
-		self:Hide()
 	elseif db.stanceCheck and GetNumShapeshiftForms() > 0 then
         local index = GetShapeshiftForm()
         if index < 1 or index > GetNumShapeshiftForms() then
@@ -83,19 +60,7 @@ function RM:UpdateReminderIcon(event, unit)
 			self.icon:SetTexture(self.cacheTexture)
 			self.hasTexture = true
         end
-
-		if db.combat then
-			self:RegisterEvent("PLAYER_REGEN_ENABLED")
-			self:RegisterEvent("PLAYER_REGEN_DISABLED")
-		end
-
-		if db.instance or db.pvp then
-			self:RegisterEvent("ZONE_CHANGED_NEW_AREA")
-		end
 	elseif db.weaponCheck then
-		self:UnregisterAllEvents()
-		self:RegisterEvent("UNIT_INVENTORY_CHANGED")
-
 		if not hasOffhandWeapon and hasMainHandEnchant then
 			self.cacheTexture = GetInventoryItemTexture("player", 16)
 			self.icon:SetTexture(self.cacheTexture)
@@ -112,19 +77,6 @@ function RM:UpdateReminderIcon(event, unit)
 				self.icon:SetTexture(self.cacheTexture)
 				self.hasTexture = true
 			end
-		end
-
-		if db.combat then
-			self:RegisterEvent("PLAYER_REGEN_ENABLED")
-			self:RegisterEvent("PLAYER_REGEN_DISABLED")
-		end
-
-		if db.instance or db.pvp then
-			self:RegisterEvent("ZONE_CHANGED_NEW_AREA")
-		end
-
-		if db.role then
-			self:RegisterEvent("UNIT_INVENTORY_CHANGED")
 		end
 	end
 
@@ -152,7 +104,7 @@ function RM:UpdateReminderIcon(event, unit)
 	end
 
 	if db.combat then
-		if InCombatLockdown() then
+		if UnitAffectingCombat("player") then
 			combatCheck = true
 		else
 			combatCheck = nil
@@ -262,6 +214,7 @@ function RM:CreateReminder(name, index)
 
 	frame:RegisterUnitEvent("UNIT_AURA", "player")
 	frame:RegisterEvent("PLAYER_ENTERING_WORLD")
+	frame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
 	frame:RegisterEvent("UNIT_INVENTORY_CHANGED")
 	frame:RegisterEvent("PLAYER_REGEN_ENABLED")
 	frame:RegisterEvent("PLAYER_REGEN_DISABLED")

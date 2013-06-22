@@ -1,4 +1,5 @@
 local R, L, P = unpack(select(2, ...)) --Import: Engine, Locales, ProfileDB, local
+local RC = LibStub("LibRangeCheck-2.0")
 local UF = R:GetModule("UnitFrames")
 local oUF = RayUF or oUF
 
@@ -60,7 +61,7 @@ function UF:ConstructHealthBar(frame, bg, text)
 
     if text then
         health.value = frame.textframe:CreateFontString(nil, "OVERLAY")
-        health.value:SetFont(R["media"].font, R["media"].fontsize, R["media"].fontflag)
+        health.value:SetFont(R["media"].font, R["media"].fontsize - 1, R["media"].fontflag)
         health.value:SetJustifyH("LEFT")
         health.value:SetParent(frame.textframe)
     end
@@ -91,7 +92,7 @@ function UF:ConstructPowerBar(frame, bg, text)
     if bg then
         power.bg = power:CreateTexture(nil, "BORDER")
         power.bg:SetAllPoints()
-        power.bg:SetTexture(R["media"].blank)
+        power.bg:SetTexture(R["media"].normal)
         power.bg.multiplier = 0.2
     end
 
@@ -102,7 +103,7 @@ function UF:ConstructPowerBar(frame, bg, text)
         textframe:SetFrameLevel(frame:GetFrameLevel()+5)
 
         power.value = textframe:CreateFontString(nil, "OVERLAY")
-        power.value:SetFont(R["media"].font, R["media"].fontsize, R["media"].fontflag)
+        power.value:SetFont(R["media"].font, R["media"].fontsize - 1, R["media"].fontflag)
         power.value:SetJustifyH("LEFT")
         power.value:SetParent(textframe)
     end
@@ -124,8 +125,8 @@ function UF:ConstructPortrait(frame)
     local portrait = CreateFrame("PlayerModel", nil, frame)
     portrait:SetFrameStrata("LOW")
     portrait:SetFrameLevel(frame.Health:GetFrameLevel() + 1)
-    portrait:SetPoint("TOPLEFT", frame.Health, "TOPLEFT", 0, 0)
-    portrait:SetPoint("BOTTOMRIGHT", frame.Health, "BOTTOMRIGHT", 0, 0)
+    portrait:Point("TOPLEFT", frame.Health, "TOPLEFT", 0, 0)
+    portrait:Point("BOTTOMRIGHT", frame.Health, "BOTTOMRIGHT", 0, 1)
     portrait:SetAlpha(.2)
     portrait.PostUpdate = function(frame)
         if frame:GetModel() and frame:GetModel().find and frame:GetModel():find("worgenmale") then
@@ -632,7 +633,7 @@ function UF:PostUpdateHealth(unit, cur, max)
         if self.__owner.isMouseOver then
             self.value:SetFormattedText("|cff%02x%02x%02x%s|r", color[1] * 255, color[2] * 255, color[3] * 255, R:ShortValue(UnitHealth(unit)))
         else
-            self.value:SetFormattedText("|cff%02x%02x%02x%d%%|r", color[1] * 255, color[2] * 255, color[3] * 255, floor(UnitHealth(unit) / UnitHealthMax(unit) * 100 + 0.5))
+            self.value:SetFormattedText("|cff%02x%02x%02x%.1f%%|r", color[1] * 255, color[2] * 255, color[3] * 255, UnitHealth(unit) / UnitHealthMax(unit) * 100)
         end
     elseif self.__owner.isMouseOver then
         self.value:SetFormattedText("|cff%02x%02x%02x%s|r", color[1] * 255, color[2] * 255, color[3] * 255, R:ShortValue(UnitHealthMax(unit)))
@@ -670,7 +671,7 @@ function UF:PostUpdatePower(unit, cur, max)
         if self.__owner.isMouseOver then
             self.value:SetFormattedText("%s - |cff%02x%02x%02x%s|r", R:ShortValue(UnitPower(unit)), color[1] * 255, color[2] * 255, color[3] * 255, R:ShortValue(UnitPowerMax(unit)))
         elseif type == "MANA" then
-            self.value:SetFormattedText("|cff%02x%02x%02x%d%%|r", color[1] * 255, color[2] * 255, color[3] * 255, floor(UnitPower(unit) / UnitPowerMax(unit) * 100 + 0.5))
+            self.value:SetFormattedText("|cff%02x%02x%02x%.1f%%|r", color[1] * 255, color[2] * 255, color[3] * 255,  UnitPower(unit) / UnitPowerMax(unit) * 100)
         elseif cur > 0 then
             self.value:SetFormattedText("|cff%02x%02x%02x%d|r", color[1] * 255, color[2] * 255, color[3] * 255, UnitPower(unit))
         else
@@ -892,75 +893,6 @@ function UF:CustomFilter(unit, icon, name, rank, texture, count, dtype, duration
     return true
 end
 
-function UF:FocusText(frame)
-    local focusdummy = CreateFrame("BUTTON", "focusdummy", frame, "SecureActionButtonTemplate")
-    focusdummy:SetFrameStrata("HIGH")
-    focusdummy:SetWidth(25)
-    focusdummy:SetHeight(25)
-    focusdummy:Point("CENTER", frame.Health, 0, 0)
-    focusdummy:EnableMouse(true)
-    focusdummy:RegisterForClicks("AnyUp")
-    focusdummy:SetAttribute("type", "macro")
-    focusdummy:SetAttribute("macrotext", "/focus")
-    focusdummy:SetBackdrop({
-        bgFile =  [=[Interface\ChatFrame\ChatFrameBackground]=],
-        edgeFile = "Interface\\Buttons\\WHITE8x8",
-        edgeSize = 1,
-        insets = {
-            left = 0,
-            right = 0,
-            top = 0,
-            bottom = 0
-        }
-    })
-    focusdummy:SetBackdropColor(.1,.1,.1,0)
-    focusdummy:SetBackdropBorderColor(0,0,0,0)
-
-    focusdummytext = focusdummy:CreateFontString(frame,"OVERLAY")
-    focusdummytext:Point("CENTER", frame.Health, 0, 0)
-    focusdummytext:SetFont(R["media"].font, R["media"].fontsize, R["media"].fontflag)
-    focusdummytext:SetText(L["焦点"])
-    focusdummytext:SetVertexColor(1,0.2,0.1,0)
-
-    focusdummy:SetScript("OnLeave", function(frame) focusdummytext:SetVertexColor(1,0.2,0.1,0) end)
-    focusdummy:SetScript("OnEnter", function(frame) focusdummytext:SetTextColor(.6,.6,.6) end)
-end
-
-function UF:ClearFocusText(frame)
-    local clearfocus = CreateFrame("BUTTON", "focusdummy", frame, "SecureActionButtonTemplate")
-    clearfocus:SetFrameStrata("HIGH")
-    clearfocus:SetWidth(25)
-    clearfocus:SetHeight(20)
-    clearfocus:Point("TOP", frame,0, 0)
-    clearfocus:EnableMouse(true)
-    clearfocus:RegisterForClicks("AnyUp")
-    clearfocus:SetAttribute("type", "macro")
-    clearfocus:SetAttribute("macrotext", "/clearfocus")
-
-    clearfocus:SetBackdrop({
-        bgFile =  [=[Interface\ChatFrame\ChatFrameBackground]=],
-        edgeFile = "Interface\\Buttons\\WHITE8x8",
-        edgeSize = 1,
-        insets = {
-            left = 0,
-            right = 0,
-            top = 0,
-            bottom = 0
-        }
-    })
-    clearfocus:SetBackdropColor(.1,.1,.1,0)
-    clearfocus:SetBackdropBorderColor(0,0,0,0)
-
-    clearfocustext = clearfocus:CreateFontString(frame,"OVERLAY")
-    clearfocustext:Point("CENTER", frame.Health, 0, 0)
-    clearfocustext:SetFont(R["media"].font, R["media"].fontsize, R["media"].fontflag)
-    clearfocustext:SetText(L["取消焦点"])
-    clearfocustext:SetVertexColor(1,0.2,0.1,0)
-
-    clearfocus:SetScript("OnLeave", function(frame) clearfocustext:SetVertexColor(1,0.2,0.1,0) end)
-    clearfocus:SetScript("OnEnter", function(frame) clearfocustext:SetTextColor(.6,.6,.6) end)
-end
-
 function UF:ConstructMonkResourceBar(frame)
     local bars = CreateFrame("Frame", nil, frame)
     bars:SetSize(200, 5)
@@ -1152,7 +1084,7 @@ function UF:ConstructShamanResourceBar(frame)
         bars[i]:GetStatusBarTexture():SetHorizTile(false)
         bars[i]:SetFrameLevel(5)
 
-        bars[i]:SetBackdrop({bgFile = R["media"].blank})
+        bars[i]:SetBackdrop({bgFile = R["media"].normal})
         bars[i]:SetBackdropColor(0.5, 0.5, 0.5)
         bars[i]:SetMinMaxValues(0, 1)
 
@@ -1260,6 +1192,44 @@ function UF:ConstructMageResourceBar(frame)
 	bars.BgColors = { 0, 0, 0 }
 
     return bars
+end
+
+function UF:EnableHealPredictionAndAbsorb(frame)
+	local mhpb = frame:CreateTexture(nil, "BORDER", 5)
+	mhpb:SetWidth(1)
+	mhpb:SetTexture(R["media"].normal)
+	mhpb:SetVertexColor(0, 1, 0.5, 0.25)
+
+	local ohpb = frame:CreateTexture(nil, "BORDER", 5)
+	ohpb:SetWidth(1)
+	ohpb:SetTexture(R["media"].normal)
+	ohpb:SetVertexColor(0, 1, 0, 0.25)
+
+	local abb = frame:CreateTexture(nil, "BORDER", 5)
+	abb:SetWidth(1)
+	abb:SetTexture(R["media"].normal)
+	abb:SetVertexColor(.66, 1, 1, .7)
+
+	local abbo = frame:CreateTexture(nil, "ARTWORK", 1)
+	abbo:SetAllPoints(abb)
+	abbo:SetTexture("Interface\\RaidFrame\\Shield-Overlay", true, true)
+	abbo.tileSize = 32
+
+	local oag = frame:CreateTexture(nil, "ARTWORK", 1)
+	oag:SetWidth(15)
+	oag:SetTexture("Interface\\RaidFrame\\Shield-Overshield")
+	oag:SetBlendMode("ADD")
+	oag:SetPoint("TOPLEFT", frame.Health, "TOPRIGHT", -5, 0)
+	oag:SetPoint("BOTTOMLEFT", frame.Health, "BOTTOMRIGHT", -5, 0)
+
+	frame.HealPredictionAndAbsorb = {
+		myBar = mhpb,
+		otherBar = ohpb,
+		absorbBar = abb,
+		absorbBarOverlay = abbo,
+		overAbsorbGlow = oag,
+		maxOverflow = 1,
+	}
 end
 
 function UF:UpdateEclipse(unit)
@@ -1378,6 +1348,59 @@ function UF:AuraBarFilter(unit, name, rank, icon, count, debuffType, duration, e
     end
 
     return returnValue
+end
+
+local RangeColors = {
+	[5] = RayUF.colors.reaction[5],
+	[30] = RayUF.colors.reaction[4],
+	[35] = RayUF.colors.reaction[3],
+	[40] = {1.00, 0.38, 0.08, 1},
+	[100] = RayUF.colors.reaction[1],
+}
+
+function UF:Construct_RangeText(frame)
+	local text = frame.textframe:CreateFontString(nil, "OVERLAY")
+	text:SetFont(R["media"].pxfont, R.mult*10, "OUTLINE,MONOCHROME")
+	-- text:SetFont(R["media"].font, R["media"].fontsize - 2, R["media"].fontflag)
+	text:SetJustifyH("RIGHT")
+	text:SetParent(frame.textframe)
+	text:Point("TOPRIGHT", frame.textframe, "TOPLEFT", -2, 3)
+	return text
+end
+
+function UF:RangeDisplayUpdate(frame)
+	if ( not UnitExists("target") ) or ( not frame.RangeText ) then return end
+	
+	-- Get range
+	local section
+	local minRange, maxRange = RC:GetRange("target")
+	
+	-- No change? Skip
+	if ((minRange == frame.RangeText.lastMinRange) and (maxRange == frame.RangeText.lastMaxRange)) then return end
+
+	frame.RangeText.lastMinRange = minRange
+	frame.RangeText.lastMaxRange = maxRange
+
+	-- Get Range section
+	if UnitIsUnit("player", "target") then maxRange = nil end
+	if minRange > 80 then maxRange = nil end
+	if maxRange then
+		if maxRange <= 5 then
+			section = 5
+		elseif maxRange <= 30 then
+			section = 30
+		elseif maxRange <= 35 then
+			section = 35
+		elseif maxRange <= 40 then
+			section = 40
+		else
+			section = 100
+		end
+		frame.RangeText:SetFormattedText("%d", maxRange)
+		frame.RangeText:SetTextColor(RangeColors[section][1], RangeColors[section][2], RangeColors[section][3])
+	else
+		frame.RangeText:SetText("")
+	end
 end
 
 function UF:Construct_AuraBars()

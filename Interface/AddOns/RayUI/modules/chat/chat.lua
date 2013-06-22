@@ -32,6 +32,56 @@ local function GetTimeForSavedMessage()
 	return time().."."..randomTime
 end
 
+local function GetColor(className, isLocal)
+	if isLocal then
+		local found
+		for k,v in pairs(LOCALIZED_CLASS_NAMES_FEMALE) do
+			if v == className then className = k found = true break end
+		end
+		if not found then
+			for k,v in pairs(LOCALIZED_CLASS_NAMES_MALE) do
+				if v == className then className = k break end
+			end
+		end
+	end
+	local tbl = R.colors.class[className]
+	local color = ("%02x%02x%02x"):format(tbl.r*255, tbl.g*255, tbl.b*255)
+	return color
+end
+
+local changeBNetName = function(misc, id, moreMisc, fakeName, tag, colon)
+	local _, charName, _, _, _, _, _, englishClass = BNGetToonInfo(id)
+	if englishClass and englishClass ~= "" then
+		fakeName = "[|cFF"..GetColor(englishClass, true)..fakeName.."|r]"
+	end
+	return misc..id..moreMisc..fakeName..tag..(colon == ":" and ":" or colon)
+end
+
+function CH:GetColoredName(event, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12)
+	local chatType = strsub(event, 10)
+	if ( strsub(chatType, 1, 7) == "WHISPER" ) then
+		chatType = "WHISPER"
+	end
+	if ( strsub(chatType, 1, 7) == "CHANNEL" ) then
+		chatType = "CHANNEL"..arg8
+	end
+	local info = ChatTypeInfo[chatType]
+
+	if ( info and info.colorNameByClass and arg12 ) then
+		local localizedClass, englishClass, localizedRace, englishRace, sex = GetPlayerInfoByGUID(arg12)
+
+		if ( englishClass ) then
+			local classColorTable = R.colors.class[englishClass]
+			if ( not classColorTable ) then
+				return arg2
+			end
+			return string.format("\124cff%.2x%.2x%.2x", classColorTable.r*255, classColorTable.g*255, classColorTable.b*255)..arg2.."\124r"
+		end
+	end
+
+	return arg2
+end
+
 local function CreatCopyFrame()
 	local S = R:GetModule("Skins")
 	frame = CreateFrame("Frame", "CopyFrame", UIParent)
@@ -147,8 +197,8 @@ local function ChatCopyButtons(id)
 			end)
 		end
 
-		button:SetScript("OnEnter", function() 
-			button:SetAlpha(1) 
+		button:SetScript("OnEnter", function()
+			button:SetAlpha(1)
 		end)
 		button:SetScript("OnLeave", function() button:SetAlpha(0) end)
 	end
@@ -200,7 +250,7 @@ function CH:GetOptions()
 end
 
 function CH:Info()
-	return L["|cff7aa6d6Ray|r|cffff0000U|r|cff7aa6d6I|r聊天模块."] 
+	return L["|cff7aa6d6Ray|r|cffff0000U|r|cff7aa6d6I|r聊天模块."]
 end
 
 function CH:EditBox_MouseOn()
@@ -664,6 +714,7 @@ function CH:AddMessage(text, ...)
 		text = ("|cffffffff|HTimeCopy|h|r%s|h%s"):format(BetterDate(CHAT_TIMESTAMP_FORMAT or "|cff64C2F5[%H:%M]|r ", time()), text)
 	end
 	text = string.gsub(text, "%[(%d+)%. .-%]", "[%1]")
+	text = string.gsub(text, "(|HBNplayer:%S-|k:)(%d-)(:%S-|h)%[(%S-)%](|?h?)(:?)", changeBNetName)
     text = string.gsub(text, "EUI", "ElvUI")
 	return self.OldAddMessage(self, text, ...)
 end
@@ -777,20 +828,20 @@ function CH:SaveChatHistory(event, ...)
 
 		if c > 128 then
 			RayUICharacterData.ChatHistory[k] = nil
-		end	  
+		end
 	end
 end
 
-function CH:DisplayChatHistory()	
+function CH:DisplayChatHistory()
 	local temp, data = {}
 	for id, _ in pairs(RayUICharacterData.ChatHistory) do
 		table.insert(temp, tonumber(id))
 	end
-	
+
 	table.sort(temp, function(a, b)
 		return a < b
 	end)
-	
+
 	for i = 1, #temp do
 		data = RayUICharacterData.ChatHistory[tostring(temp[i])]
 		if (time() - temp[i]) > 21600 then
@@ -814,8 +865,8 @@ function CH:ApplyStyle(event, ...)
 
             cf:SetParent(ChatBG)
             local ebParts = {"Left", "Mid", "Right", "Middle"}
-            for j = 1, #CHAT_FRAME_TEXTURES do 
-                _G[frameName..CHAT_FRAME_TEXTURES[j]]:SetTexture(nil) 
+            for j = 1, #CHAT_FRAME_TEXTURES do
+                _G[frameName..CHAT_FRAME_TEXTURES[j]]:SetTexture(nil)
             end
             for _, ebPart in ipairs(ebParts) do
                 if _G[frameName.."EditBoxFocus"..ebPart] then
@@ -921,7 +972,7 @@ function CH:ApplyStyle(event, ...)
 			self:SecureHook(eb, "AddHistoryLine", "ChatEdit_AddHistory")
 			for i, text in pairs(RayUICharacterData.ChatEditHistory) do
 				eb:AddHistoryLine(text)
-			end	
+			end
 
             cf.styled = true
         end
@@ -1114,7 +1165,7 @@ function CH:Initialize()
 	self:SecureHook("FCFTab_UpdateColors", "FaneifyTab")
 	self:SecureHook("FCF_StartAlertFlash")
 	self:SecureHook("FCF_StopAlertFlash")
-    self:SecureHook("FCF_Tab_OnClick") 
+    self:SecureHook("FCF_Tab_OnClick")
 
 	local events = {
 		"CHAT_MSG_BATTLEGROUND", "CHAT_MSG_BATTLEGROUND_LEADER",
@@ -1143,6 +1194,7 @@ function CH:Initialize()
     self:EnableDumpTool()
 	self:ScheduleRepeatingTimer("SetChatPosition", 1)
 	self:RawHook("SetItemRef", true)
+	self:RawHook("GetColoredName", true)
 
 	ChatHistoryEvent:RegisterEvent("CHAT_MSG_BATTLEGROUND")
 	ChatHistoryEvent:RegisterEvent("CHAT_MSG_BATTLEGROUND_LEADER")
@@ -1162,7 +1214,7 @@ function CH:Initialize()
 	ChatHistoryEvent:RegisterEvent("CHAT_MSG_WHISPER")
 	ChatHistoryEvent:RegisterEvent("CHAT_MSG_WHISPER_INFORM")
 	ChatHistoryEvent:RegisterEvent("CHAT_MSG_YELL")
-    ChatHistoryEvent:RegisterEvent("PLAYER_LOGIN")
+    -- ChatHistoryEvent:RegisterEvent("PLAYER_LOGIN")
 	ChatHistoryEvent:SetScript("OnEvent", function(self, event, ...)
         if event =="PLAYER_LOGIN" then
             ChatHistoryEvent:UnregisterEvent("PLAYER_LOGIN")
