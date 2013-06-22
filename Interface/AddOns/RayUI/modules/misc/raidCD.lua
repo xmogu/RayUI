@@ -47,6 +47,14 @@ local function StopTimer(bar)
 	M:UpdateRaidCDPositions()
 end
 
+local function StopAllTimer()
+	for i = 1, #bars do
+		bars[i]:Hide()
+		bars[i]:SetScript("OnUpdate", nil)
+	end
+	wipe(bars)
+end
+
 local function BarUpdate(self, elapsed)
 	local curTime = GetTime()
 	if self.endTime < curTime then
@@ -82,6 +90,7 @@ local OnMouseDown = function(self, button)
 		StopTimer(self)
 	end
 end
+
 local function CreateBar()
 	local bar = CreateFrame("Statusbar", nil, UIParent)
 	bar:SetFrameStrata("LOW")
@@ -102,7 +111,7 @@ local function CreateBar()
 	bar.left:SetJustifyH("LEFT")
 
 	bar.icon = CreateFrame("Button", nil, bar)
-	bar.icon:Size(20, 20)
+	bar.icon:Size(18, 18)
 	bar.icon:Point("RIGHT", bar, "LEFT", -4, 0)
     bar.icon:CreateShadow("Background")
 
@@ -140,7 +149,8 @@ local function StartTimer(name, spellId)
 	bar:SetScript("OnEnter", OnEnter)
 	bar:SetScript("OnLeave", OnLeave)
 	bar:SetScript("OnMouseDown", OnMouseDown)
-	tinsert(bars, bar)
+	bar.id = #bars+1
+	bars[#bars+1] = bar
 	M:UpdateRaidCDPositions()
 end
 
@@ -154,23 +164,54 @@ end
 
 function M:ZONE_CHANGED_NEW_AREA()
 	if select(2, IsInInstance()) == "arena" then
-		for k, v in pairs(bars) do
-            StopTimer(v)
+		StopAllTimer()
+	end
+end
+
+local bossfight
+function M:INSTANCE_ENCOUNTER_ENGAGE_UNIT()
+	if not UnitExists("boss1") then return end
+
+	if not bossfight then
+		bossfight=true
+	end
+end
+
+local function checkForWipe()
+	local w = true
+	local num = GetNumGroupMembers()
+	for i = 1, num do
+		local name = GetRaidRosterInfo(i)
+		if name then
+			if UnitAffectingCombat(name) then
+				w = false
+			end
 		end
 	end
+	if (w and bossfight) then
+		bossfight=false
+		StopAllTimer()
+	end
+	if not w then M:ScheduleTimer(checkForWipe, 2) end
+end
+
+function M:PLAYER_REGEN_ENABLED()
+	checkForWipe()
 end
 
 function M:EnableRaidCD()
     M:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
     M:RegisterEvent("ZONE_CHANGED_NEW_AREA")
+    M:RegisterEvent("INSTANCE_ENCOUNTER_ENGAGE_UNIT")
+    M:RegisterEvent("PLAYER_REGEN_ENABLED")
 end
 
 function M:DisableRaidCD()
     M:UnregisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
     M:UnregisterEvent("ZONE_CHANGED_NEW_AREA")
-    for k, v in pairs(bars) do
-        StopTimer(v)
-    end
+    M:UnregisterEvent("INSTANCE_ENCOUNTER_ENGAGE_UNIT")
+    M:UnregisterEvent("PLAYER_REGEN_ENABLED")
+    StopAllTimer()
 end
 
 local function LoadFunc()
