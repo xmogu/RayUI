@@ -37,10 +37,12 @@ function IF:CreateInfoPanel(name, width)
 	panel.Square.Bg:Size(7, 7)
 
 	panel:SetScript("OnEnter", function(self)
+        if not IF.db.autoHide then return end
 		IF:CancelTimer(IF.Anim)
 		self.Indicator:Show()
 	end)
 	panel:SetScript("OnLeave", function(self)
+        if not IF.db.autoHide then return end
 		self.Indicator:Hide()
 		IF:ReadyToSlideDown()
 	end)
@@ -49,6 +51,7 @@ function IF:CreateInfoPanel(name, width)
 end
 
 function IF:ReadyToSlideDown()
+    if not self.db.autoHide then return end
 	self:CancelTimer(self.Anim)
 	self.Anim = self:ScheduleTimer("SlideDown", 3)
 end
@@ -67,11 +70,30 @@ function IF:SlideUp()
 	R:Slide(RayUI_BottomInfoBar, "UP", height, speed)
 end
 
+function IF:CheckAutoHide()
+    if not self.db.autoHide then return end
+    local x, y = GetCursorPosition()
+    if y > height and self:TimeLeft(self.Anim) <= 0 then
+        self:ReadyToSlideDown()
+    end
+end
+
 function IF:Initialize()
 	local menuFrame = CreateFrame("Frame", "RayUI_InfobarRightClickMenu", UIParent, "UIDropDownMenuTemplate")
 	local menuList = {
-		{text = "未来的自动隐藏开关",
-		func = function() end},
+		{
+            text = L["自动隐藏信息条"],
+            checked = function() return self.db.autoHide end,
+		    func = function()
+                    self.db.autoHide = not self.db.autoHide
+                    if not self.db.autoHide then
+                        self:CancelTimer(self.Anim)
+                        self:SlideUp()
+                    else
+                        self:SlideDown()
+                    end
+                end,
+        },
 	}
 
 	local bottombar = CreateFrame("Frame", "RayUI_BottomInfoBar", UIParent)
@@ -108,6 +130,7 @@ function IF:Initialize()
 	UIParent:HookScript("OnSizeChanged", function(self) bottombar:SetWidth(UIParent:GetWidth()) end)
 
 	self.Anim = self:ScheduleTimer("SlideDown", 10)
+	self:ScheduleRepeatingTimer("CheckAutoHide", 1)
 
 	local RayUI_ExpBar = CreateFrame("Frame", "RayUI_ExpBar", UIParent)
 	RayUI_ExpBar:CreateShadow("Background")
